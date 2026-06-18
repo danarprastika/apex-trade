@@ -68,7 +68,7 @@ jobs:
           echo "SECRET_KEY=test-secret-key" >> $GITHUB_ENV
       - name: Run pytest
         run: pytest backend/tests -v --tb=short --cov=app --cov-report=xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage
@@ -117,7 +117,7 @@ jobs:
         run: cd frontend && npm ci
       - name: Build
         run: cd frontend && npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist
