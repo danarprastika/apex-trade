@@ -14,23 +14,20 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[NotificationRead])
-def list_notifications(
-    current_user: User = Depends(get_current_user),
-    notification_service: NotificationService = Depends(get_notification_service),
+async def list_notifications(
+    current_user: Annotated[User, Depends(get_current_user)],
+    notification_service: Annotated[NotificationService, Depends(get_notification_service)],
 ):
-    return notification_service.list(current_user.id)
+    return await notification_service.list(current_user.id)
 
 
 @router.post("/", response_model=NotificationRead, status_code=201)
-def create_notification(
+async def create_notification(
     payload: NotificationCreate,
-    current_user: User = Depends(get_current_user),
-    notification_service: NotificationService = Depends(get_notification_service),
+    current_user: Annotated[User, Depends(get_current_user)],
+    notification_service: Annotated[NotificationService, Depends(get_notification_service)],
 ):
     user_id = payload.user_id or current_user.id
     if user_id != current_user.id and current_user.role not in {"ADMIN", "SUPER_ADMIN"}:
         raise PermissionDeniedError("Permission denied")
-    return notification_service.create(user_id, payload.notification_type, payload.title, payload.message)
-
-
-
+    return await notification_service.create(user_id, payload.notification_type, payload.title, payload.message)

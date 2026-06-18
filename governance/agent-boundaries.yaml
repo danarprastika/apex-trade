@@ -1,0 +1,184 @@
+policy_id: apex-agent-boundaries
+schema_version: 1.0
+status: implemented
+description: Functional, data, action, and communication boundaries for APEX AI agents.
+last_updated: 2026-06-16
+
+agents:
+  research:
+    display_name: Research Agent
+    allowed_responsibilities:
+      - Gather information
+      - Summarize research
+      - Identify opportunities
+      - Produce confidence-scored findings
+      - Provide source citations
+    forbidden_responsibilities:
+      - Place trades
+      - Modify portfolios
+      - Approve execution
+      - Access account credentials
+      - Execute orders
+      - Override risk limits
+    data_classification:
+      allowed:
+        - public
+        - internal
+        - confidential
+      restricted:
+        - credentials
+        - exchange_api_secrets
+        - personal_data
+        - production_trading_tokens
+    output_validation_required: true
+    correlation_id_required: true
+
+  market:
+    display_name: Market Agent
+    allowed_responsibilities:
+      - Analyze market conditions
+      - Classify market regimes
+      - Produce market signals
+      - Validate data freshness
+      - Detect abnormal market conditions
+    forbidden_responsibilities:
+      - Execute trades
+      - Approve portfolio changes
+      - Override risk limits
+      - Access account credentials
+      - Modify order intent
+    data_classification:
+      allowed:
+        - public
+        - internal
+        - confidential
+      restricted:
+        - credentials
+        - exchange_api_secrets
+        - personal_data
+        - production_trading_tokens
+    output_validation_required: true
+    correlation_id_required: true
+
+  risk:
+    display_name: Risk Agent
+    allowed_responsibilities:
+      - Calculate risk
+      - Monitor limits
+      - Detect breaches
+      - Recommend or block unsafe actions
+      - Validate post-trade risk
+      - Trigger risk alerts
+    forbidden_responsibilities:
+      - Initiate trades
+      - Change portfolio strategy
+      - Approve exceptions outside policy
+      - Execute orders
+      - Modify approved order intent
+    data_classification:
+      allowed:
+        - internal
+        - confidential
+        - regulated
+      restricted:
+        - credentials
+        - exchange_api_secrets
+        - production_trading_tokens
+    output_validation_required: true
+    correlation_id_required: true
+
+  portfolio:
+    display_name: Portfolio Agent
+    allowed_responsibilities:
+      - Generate allocation proposals
+      - Generate rebalance recommendations
+      - Calculate target weights
+      - Produce portfolio rationale
+      - Estimate expected risk impact
+    forbidden_responsibilities:
+      - Execute orders
+      - Bypass risk checks
+      - Approve its own recommendations
+      - Access account credentials
+      - Modify approved order constraints
+    data_classification:
+      allowed:
+        - internal
+        - confidential
+        - regulated
+      restricted:
+        - credentials
+        - exchange_api_secrets
+        - production_trading_tokens
+    output_validation_required: true
+    correlation_id_required: true
+
+  execution:
+    display_name: Execution Agent
+    allowed_responsibilities:
+      - Execute approved orders
+      - Manage order lifecycle
+      - Report fills
+      - Optimize execution within approved constraints
+      - Report execution exceptions
+    forbidden_responsibilities:
+      - Change strategy
+      - Alter order intent
+      - Exceed approved quantity limits
+      - Exceed approved price limits
+      - Bypass risk controls
+      - Approve its own order
+      - Execute during kill-switch state
+    data_classification:
+      allowed:
+        - internal
+        - confidential
+        - regulated
+      restricted:
+        - credentials
+        - exchange_api_secrets
+        - production_trading_tokens
+    output_validation_required: true
+    correlation_id_required: true
+
+data_boundaries:
+  data_classification_required: true
+  allowed_classes:
+    - public
+    - internal
+    - confidential
+    - regulated
+    - restricted
+  source_validation_required: true
+  data_freshness_required: true
+  data_minimization_required: true
+  sensitive_data_protection_required: true
+  output_validation_required: true
+
+action_boundaries:
+  research_and_market_actions:
+    automation_allowed: true
+    condition: Automation is allowed only when the action creates insights or signals.
+  portfolio_recommendations:
+    automation_allowed: true
+    condition: Material changes require risk validation and approval.
+  risk_blocks:
+    automation_allowed: true
+    condition: Risk Agent blocks must be enforced automatically.
+  execution:
+    automation_allowed: true
+    condition: Execution Agent may only execute orders that passed approval and risk checks.
+  emergency_stop:
+    automation_allowed: false
+    condition: Any approved risk or operations user must be able to stop agent activity.
+  manual_override:
+    automation_allowed: false
+    condition: Overrides require human approval, reason codes, and audit logging.
+
+communication_boundaries:
+  structured_messages_required: true
+  schema_validation_required: true
+  free_form_authority_transfer_allowed: false
+  hidden_side_channels_allowed: false
+  correlation_id_required: true
+  idempotency_required_for_state_changes: true

@@ -1,0 +1,175 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: apex-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alertmanager/alertmanager.yml:/etc/prometheus/alertmanager.yml:ro
+      - ./alert_rules:/etc/prometheus/rules:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+    depends_on:
+      - alertmanager
+      - loki
+      - postgres-exporter
+      - redis-exporter
+      - node-exporter
+      - celery-exporter
+    networks:
+      - monitoring-network
+      - apex-network:
+          aliases:
+            - prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: apex-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - monitoring-network
+
+  loki:
+    image: grafana/loki:latest
+    container_name: apex-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring-network
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: apex-promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - monitoring-network
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: apex-alertmanager
+    restart: unless-stopped
+    env_file:
+      - .env.monitoring.example
+    ports:
+      - "9093:9093"
+    volumes:
+      - alertmanager-data:/alertmanager
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/telegram.tmpl:/etc/alertmanager/templates/telegram.tmpl:ro
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    networks:
+      - monitoring-network
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: apex-postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: postgresql://apex:apex_password@postgres:5432/apex_db?sslmode=disable
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+      - apex-network:
+          aliases:
+            - postgres-exporter
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: apex-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: redis:6379
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+      - apex-network:
+          aliases:
+            - redis-exporter
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: apex-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+
+  celery-exporter:
+    image: danihodovic/celery-exporter:latest
+    container_name: apex-celery-exporter
+    restart: unless-stopped
+    ports:
+      - "9818:9818"
+    environment:
+      BROKER_URL: redis://redis:6379/0
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+      - apex-network:
+          aliases:
+            - celery-exporter
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  alertmanager-data:
+  promtail-positions:
+
+networks:
+  monitoring-network:
+    driver: bridge
+  apex-network:
+    external: true

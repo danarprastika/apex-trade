@@ -15,9 +15,9 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[UserRead])
-def list_users(
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+async def list_users(
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ):
     if current_user.role not in {ROLE_SUPER_ADMIN, ROLE_ADMIN}:
         raise PermissionDeniedError("Permission denied")
@@ -25,41 +25,41 @@ def list_users(
 
 
 @router.get("/me", response_model=UserRead)
-def read_me(current_user: User = Depends(get_current_user)):
+async def read_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
 
 
 @router.get("/me/profile")
-def read_my_profile(
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+async def read_my_profile(
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ):
     return user_service.get_or_create_profile(current_user)
 
 
 @router.get("/me/settings", response_model=UserSettingsRead)
-def read_my_settings(
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+async def read_my_settings(
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ):
     return user_service.get_or_create_profile(current_user)
 
 
 @router.patch("/me/settings", response_model=UserSettingsRead)
-def update_my_settings(
+async def update_my_settings(
     payload: UserSettingsUpdate,
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ):
     updates = payload.model_dump(exclude_unset=True)
     return user_service.update_settings(current_user, **updates)
 
 
 @router.post("/me/settings/telegram", response_model=UserSettingsRead)
-def link_telegram(
+async def link_telegram(
     payload: UserSettingsUpdate,
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ):
     if payload.telegram_chat_id is None:
         raise PermissionDeniedError("telegram_chat_id is required")
@@ -67,11 +67,8 @@ def link_telegram(
 
 
 @router.delete("/me/settings/telegram", response_model=UserSettingsRead)
-def unlink_telegram(
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+async def unlink_telegram(
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
 ):
     return user_service.update_settings(current_user, telegram_chat_id=None)
-
-
-

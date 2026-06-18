@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.api.deps import get_audit_service, get_current_user, get_db
+from app.api.deps import get_audit_service, get_current_user
 from app.core.constants import ROLE_ADMIN, ROLE_SUPER_ADMIN
 from app.core.exceptions import PermissionDeniedError
 from app.database.models.identity import User
@@ -15,30 +15,27 @@ router = APIRouter()
 
 
 @router.get("/users", response_model=list[dict])
-def admin_users(
-    db=Depends(get_db),
-    current_user: User = Depends(get_current_user),
+async def admin_users(
+    current_user: Annotated[User, Depends(get_current_user)],
+    audit_service: Annotated[AuditService, Depends(get_audit_service)],
 ):
     if current_user.role not in {ROLE_SUPER_ADMIN, ROLE_ADMIN}:
         raise PermissionDeniedError("Permission denied")
-    return db.query(User).all()
+    return await audit_service.list_all()
 
 
 @router.get("/system", response_model=dict)
-def system_status(current_user: User = Depends(get_current_user)):
+async def system_status(current_user: Annotated[User, Depends(get_current_user)]):
     if current_user.role != ROLE_SUPER_ADMIN:
         raise PermissionDeniedError("Permission denied")
     return {"status": "ok", "mode": "admin"}
 
 
 @router.get("/audit", response_model=list[AuditLogRead])
-def audit_logs(
-    current_user: User = Depends(get_current_user),
-    audit_service: AuditService = Depends(get_audit_service),
+async def audit_logs(
+    current_user: Annotated[User, Depends(get_current_user)],
+    audit_service: Annotated[AuditService, Depends(get_audit_service)],
 ):
     if current_user.role != ROLE_SUPER_ADMIN:
         raise PermissionDeniedError("Permission denied")
-    return audit_service.list_all()
-
-
-
+    return await audit_service.list_all()

@@ -12,11 +12,10 @@ class NotificationRepository(BaseRepository[Notification]):
         super().__init__(db, Notification)
 
     def list_by_user(self, user_id: str, limit: int = 100) -> list[Notification]:
-        return list(
-            self.db.scalars(
-                select(Notification)
-                .where(Notification.user_id == user_id)
-                .order_by(Notification.created_at.desc())
-                .limit(limit)
-            ).all()
+        result = self.db.execute(
+            select(Notification)
+            .where(Notification.user_id == user_id)
+            .order_by(Notification.created_at.desc())
+            .limit(limit)
         )
+        return list(result.scalars().all())

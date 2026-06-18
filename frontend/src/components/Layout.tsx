@@ -1,11 +1,12 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Activity, Bot, Briefcase, LayoutDashboard, LineChart, Newspaper, ShieldCheck, Settings, Users } from 'lucide-react'
+import { Activity, BookOpen, Bot, Briefcase, LayoutDashboard, LineChart, Newspaper, ShieldCheck, Settings, Users } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 const menu = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/market', label: 'Market', icon: Activity },
   { to: '/trading', label: 'Trading', icon: LineChart },
+  { to: '/journal', label: 'Journal', icon: BookOpen },
   { to: '/portfolio', label: 'Portfolio', labelOnly: true },
   { to: '/news', label: 'News', icon: Newspaper },
   { to: '/admin', label: 'Admin', icon: Users }

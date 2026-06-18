@@ -217,3 +217,113 @@ export type AuditLog = {
   ip_address: string | null
   created_at: string
 }
+
+export type JournalTag = {
+  id: string
+  name: string
+  color: string
+  usage_count: number
+  created_at: string
+}
+
+export type TradeScreenshot = {
+  id: string
+  url: string
+  caption: string | null
+  stage: string | null
+  sort_order: number
+  created_at: string
+}
+
+export type TradeJournal = {
+  id: string
+  trade_id: string
+  signal_id: string | null
+  strategy_id: string
+  strategy_name: string
+  entry_reason: string
+  exit_reason: string
+  notes: string | null
+  lessons_learned: string | null
+  risk_score: number | null
+  outcome: string | null
+  tags: JournalTag[]
+  screenshots: TradeScreenshot[]
+  created_at: string
+  updated_at: string
+}
+
+export type JournalFilters = {
+  strategy_ids?: string[]
+  outcome?: string[]
+  risk_score_range?: [number, number]
+  tags?: string[]
+  date_from?: string
+  date_to?: string
+  search?: string
+  page?: number
+  size?: number
+  sort_by?: 'created_at' | 'updated_at' | 'risk_score' | 'outcome'
+  sort_order?: 'asc' | 'desc'
+}
+
+export type JournalListResponse = {
+  items: TradeJournal[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
+export type JournalStatistics = {
+  total_trades: number
+  win_rate: number | null
+  avg_risk_score: number | null
+  avg_profit: number | null
+  by_outcome?: Record<string, number>
+  by_strategy?: Record<string, number>
+  by_risk_score?: Record<string, number>
+  by_tag?: Record<string, number>
+}
+
+export type JournalCreatePayload = {
+  trade_id: string
+  entry_reason: string
+  exit_reason: string
+  notes?: string | null
+  lessons_learned?: string | null
+  risk_score?: number | null
+  tag_names?: string[]
+  screenshot_urls?: string[]
+}
+
+export type JournalUpdatePayload = {
+  entry_reason?: string | null
+  exit_reason?: string | null
+  notes?: string | null
+  lessons_learned?: string | null
+  risk_score?: number | null
+  add_tags?: string[]
+  remove_tags?: string[]
+  remove_screenshot_ids?: string[]
+}
+
+export type JournalAnalyticsSummary = {
+  performance_breakdown: {
+    overall: JournalStatistics
+    by_strategy: Record<string, JournalStatistics>
+    by_tag: Record<string, JournalStatistics>
+    by_risk_bucket: Record<string, JournalStatistics>
+  }
+  risk_correlation: {
+    correlation: number | null
+    points: Array<{ journal_id: string; risk_score: number; pnl: number; outcome: string | null }>
+  }
+  time_patterns: {
+    by_hour: Record<string, JournalStatistics>
+    by_day_of_week: Record<string, JournalStatistics>
+  }
+  tag_efficacy: {
+    items: Array<JournalStatistics & { tag: string }>
+  }
+}

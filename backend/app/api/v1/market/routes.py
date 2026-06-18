@@ -15,39 +15,39 @@ router = APIRouter()
 
 
 @router.get("/assets", response_model=list[AssetRead])
-def list_assets(
-    market_service: MarketService = Depends(get_market_service),
+async def list_assets(
+    market_service: Annotated[MarketService, Depends(get_market_service)],
 ):
-    return market_service.list_assets()
+    return await market_service.list_assets()
 
 
 @router.post("/assets", response_model=AssetRead, status_code=201)
-def create_asset(
+async def create_asset(
     payload: AssetCreate,
-    current_user: User = Depends(get_current_user),
-    market_service: MarketService = Depends(get_market_service),
+    current_user: Annotated[User, Depends(get_current_user)],
+    market_service: Annotated[MarketService, Depends(get_market_service)],
 ):
     if current_user.role not in {ROLE_SUPER_ADMIN, ROLE_ADMIN}:
         raise PermissionDeniedError("Permission denied")
-    return market_service.create_asset(payload.symbol, payload.asset_type, payload.name)
+    return await market_service.create_asset(payload.symbol, payload.asset_type, payload.name)
 
 
 @router.get("/pairs", response_model=list[MarketPairRead])
-def list_pairs(
-    market_service: MarketService = Depends(get_market_service),
+async def list_pairs(
+    market_service: Annotated[MarketService, Depends(get_market_service)],
 ):
-    return market_service.list_market_pairs()
+    return await market_service.list_market_pairs()
 
 
 @router.post("/pairs", response_model=MarketPairRead, status_code=201)
-def create_pair(
+async def create_pair(
     payload: MarketPairCreate,
-    current_user: User = Depends(get_current_user),
-    market_service: MarketService = Depends(get_market_service),
+    current_user: Annotated[User, Depends(get_current_user)],
+    market_service: Annotated[MarketService, Depends(get_market_service)],
 ):
     if current_user.role not in {ROLE_SUPER_ADMIN, ROLE_ADMIN}:
         raise PermissionDeniedError("Permission denied")
-    return market_service.create_market_pair(
+    return await market_service.create_market_pair(
         payload.exchange_id,
         payload.base_asset_id,
         payload.quote_asset_id,
@@ -56,24 +56,24 @@ def create_pair(
 
 
 @router.get("/candles", response_model=list[CandleRead])
-def list_candles(
+async def list_candles(
+    market_service: Annotated[MarketService, Depends(get_market_service)],
     market_pair_id: str,
     timeframe: str = "1h",
     limit: int = Query(100, ge=1, le=1000),
-    market_service: MarketService = Depends(get_market_service),
 ):
-    return market_service.list_candles(market_pair_id, timeframe, limit=limit)
+    return await market_service.list_candles(market_pair_id, timeframe, limit=limit)
 
 
 @router.post("/candles", response_model=CandleRead, status_code=201)
-def create_candle(
+async def create_candle(
     payload: CandleCreate,
-    current_user: User = Depends(get_current_user),
-    market_service: MarketService = Depends(get_market_service),
+    current_user: Annotated[User, Depends(get_current_user)],
+    market_service: Annotated[MarketService, Depends(get_market_service)],
 ):
     if current_user.role not in {ROLE_SUPER_ADMIN, ROLE_ADMIN}:
         raise PermissionDeniedError("Permission denied")
-    return market_service.create_candle(
+    return await market_service.create_candle(
         payload.market_pair_id,
         payload.timeframe,
         payload.open,
@@ -84,6 +84,3 @@ def create_candle(
         payload.open_time,
         payload.close_time,
     )
-
-
-

@@ -12,15 +12,20 @@ class UserRepository(BaseRepository[User]):
         super().__init__(db, User)
 
     def get_by_username_or_email(self, username: str, email: str) -> User | None:
-        return self.db.scalar(
+        result = self.db.execute(
             select(User).where((User.username == username) | (User.email == email))
         )
+        return result.scalar_one_or_none()
 
     def get_by_username(self, username: str) -> User | None:
-        return self.db.scalar(select(User).where(User.username == username))
+        result = self.db.execute(select(User).where(User.username == username))
+        return result.scalar_one_or_none()
 
     def get_active_by_id(self, user_id: str) -> User | None:
-        return self.db.scalar(select(User).where((User.id == user_id) & (User.status == "ACTIVE")))
+        result = self.db.execute(
+            select(User).where((User.id == user_id) & (User.status == "ACTIVE"))
+        )
+        return result.scalar_one_or_none()
 
 
 class UserSettingsRepository(BaseRepository[UserSettings]):
@@ -28,4 +33,5 @@ class UserSettingsRepository(BaseRepository[UserSettings]):
         super().__init__(db, UserSettings)
 
     def get_by_user_id(self, user_id: str) -> UserSettings | None:
-        return self.db.scalar(select(UserSettings).where(UserSettings.user_id == user_id))
+        result = self.db.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        return result.scalar_one_or_none()

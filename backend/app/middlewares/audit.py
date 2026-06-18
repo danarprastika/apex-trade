@@ -9,7 +9,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from app.api.deps import get_db
+import app.database.session as session_module
 from app.services.audit_service import AuditService
 
 logger = logging.getLogger(__name__)
@@ -26,14 +26,15 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         response = await call_next(request)
-        await self._audit_request(request, response)
+        self._audit_request(request, response)
         return response
 
-    async def _audit_request(self, request: Request, response: Response) -> None:
+    def _audit_request(self, request: Request, response: Response) -> None:
         if not self._should_audit():
             return
 
-        db = next(get_db())
+        SessionLocal = session_module.SessionLocal
+        db = SessionLocal()
         try:
             audit = AuditService(db)
             audit.log(

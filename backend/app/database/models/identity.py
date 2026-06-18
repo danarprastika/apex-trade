@@ -20,6 +20,7 @@ class User(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(20), default="ACTIVE", nullable=False)
 
     settings: Mapped[UserSettings | None] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
+    backtest_runs: Mapped[list["BacktestRun"]] = relationship(back_populates="user")
 
 
 class UserSettings(Base, TimestampMixin):

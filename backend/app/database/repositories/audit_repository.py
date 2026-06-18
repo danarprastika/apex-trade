@@ -12,20 +12,18 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         super().__init__(db, AuditLog)
 
     def list_by_user(self, user_id: str, limit: int = 100) -> list[AuditLog]:
-        return list(
-            self.db.scalars(
-                select(AuditLog)
-                .where(AuditLog.user_id == user_id)
-                .order_by(AuditLog.created_at.desc())
-                .limit(limit)
-            ).all()
+        result = self.db.execute(
+            select(AuditLog)
+            .where(AuditLog.user_id == user_id)
+            .order_by(AuditLog.created_at.desc())
+            .limit(limit)
         )
+        return list(result.scalars().all())
 
     def list_all(self, limit: int = 100) -> list[AuditLog]:
-        return list(
-            self.db.scalars(
-                select(AuditLog)
-                .order_by(AuditLog.created_at.desc())
-                .limit(limit)
-            ).all()
+        result = self.db.execute(
+            select(AuditLog)
+            .order_by(AuditLog.created_at.desc())
+            .limit(limit)
         )
+        return list(result.scalars().all())

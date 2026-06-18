@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -45,3 +45,37 @@ class PortfolioSnapshotRead(BaseModel):
     captured_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PerformanceMetricsRead(BaseModel):
+    total_return: float | None = None
+    sharpe_ratio: float | None = None
+    sortino_ratio: float | None = None
+    calmar_ratio: float | None = None
+    profit_factor: float | None = None
+    win_rate: float | None = None
+    expectancy: float | None = None
+    max_drawdown: float | None = None
+    risk_adjusted_return: float | None = None
+
+    period_start: datetime | None = None
+    period_end: datetime | None = None
+
+    total_trades: int = 0
+    winning_trades: int = 0
+    losing_trades: int = 0
+    gross_profit: float | None = None
+    gross_loss: float | None = None
+
+
+class PortfolioAnalyticsRequest(BaseModel):
+    portfolio_id: str | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+    risk_free_rate: float = 0.0
+
+
+class PortfolioAnalyticsResponse(BaseModel):
+    portfolio: PortfolioRead | None = None
+    metrics: PerformanceMetricsRead
+    chart_data: dict[str, list[dict[str, float | str]]] = {}

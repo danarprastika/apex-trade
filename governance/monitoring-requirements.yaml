@@ -1,0 +1,152 @@
+policy_id: apex-monitoring-requirements
+schema_version: 1.0
+status: implemented
+description: Monitoring, dashboard, SLO, SLI, and alerting requirements for APEX AI agents.
+last_updated: 2026-06-16
+
+platform_monitoring:
+  availability:
+    - agent_uptime
+    - service_health
+    - dependency_health
+  latency:
+    - agent_response_time
+    - tool_call_latency
+    - approval_latency
+    - execution_latency
+  throughput:
+    - requests_per_minute
+    - signals_per_minute
+    - proposals_per_hour
+    - orders_per_hour
+  error_rate:
+    - failed_tool_calls
+    - rejected_proposals
+    - timeout_rate
+    - validation_failures
+  queue_health:
+    - backlog_size
+    - oldest_pending_item
+    - retry_count
+    - dead_letter_queue_size
+  data_freshness:
+    - market_data_age
+    - portfolio_state_age
+    - risk_state_age
+    - news_feed_age
+  resource_usage:
+    - cpu
+    - memory
+    - disk
+    - network
+    - model_inference_cost
+
+agent_specific_monitoring:
+  research:
+    display_name: Research Agent
+    metrics:
+      - research_success_rate
+      - source_availability
+      - citation_completeness
+      - unsupported_claim_rate
+      - confidence_score_distribution
+  market:
+    display_name: Market Agent
+    metrics:
+      - signal_freshness
+      - market_data_latency
+      - signal_confidence_distribution
+      - regime_classification_stability
+      - rejected_signal_rate
+  risk:
+    display_name: Risk Agent
+    metrics:
+      - risk_calculation_latency
+      - limit_breach_count
+      - blocked_proposal_count
+      - false_positive_block_rate
+      - post_trade_risk_exceptions
+  portfolio:
+    display_name: Portfolio Agent
+    metrics:
+      - proposal_volume
+      - approval_rate
+      - rejection_reasons
+      - allocation_drift
+      - rebalance_frequency
+      - expected_risk_impact
+  execution:
+    display_name: Execution Agent
+    metrics:
+      - order_acceptance_rate
+      - fill_rate
+      - partial_fill_rate
+      - slippage
+      - execution_cost
+      - venue_failures
+      - kill_switch_events
+
+dashboards:
+  - dashboard_name: Agent Health Dashboard
+    purpose: Shows uptime, latency, errors, queue health, and dependency status for all agents.
+  - dashboard_name: Decision Pipeline Dashboard
+    purpose: Tracks research, market signal, portfolio proposal, risk approval, and execution status.
+  - dashboard_name: Risk Exposure Dashboard
+    purpose: Shows portfolio exposure, drawdown, concentration, liquidity, margin, and limit usage.
+  - dashboard_name: Execution Quality Dashboard
+    purpose: Shows fills, slippage, failed orders, venue performance, and execution costs.
+  - dashboard_name: Security and Audit Dashboard
+    purpose: Shows permission changes, secret access, policy violations, audit completeness, and security alerts.
+  - dashboard_name: Model Governance Dashboard
+    purpose: Shows model versions, prompt versions, policy versions, drift indicators, and validation failures.
+
+alerts:
+  - alert_name: Agent unavailable
+    severity: critical
+  - alert_name: Execution Agent active during kill-switch state
+    severity: critical
+  - alert_name: Unauthorized tool call attempted
+    severity: critical
+  - alert_name: Risk limit breach
+    severity: critical
+  - alert_name: Market data stale beyond threshold
+    severity: high
+  - alert_name: Portfolio data stale beyond threshold
+    severity: high
+  - alert_name: Approval timeout for pending high-impact action
+    severity: high
+  - alert_name: Execution venue failure rate above threshold
+    severity: high
+  - alert_name: Security scan or secret exposure event
+    severity: critical
+  - alert_name: Audit log write failure
+    severity: high
+  - alert_name: Agent output schema validation failure rate above threshold
+    severity: medium
+  - alert_name: Model response latency above threshold
+    severity: medium
+  - alert_name: Dependency service degradation
+    severity: medium
+
+slo_and_sli:
+  - slo_area: Agent availability
+    example_sli: Percentage of time each agent is healthy and able to process requests.
+  - slo_area: Decision latency
+    example_sli: Time from proposal creation to approval or rejection.
+  - slo_area: Execution latency
+    example_sli: Time from approved order to venue submission.
+  - slo_area: Audit completeness
+    example_sli: Percentage of agent actions with complete audit records.
+  - slo_area: Data freshness
+    example_sli: Percentage of decisions using data within the allowed age threshold.
+  - slo_area: Security compliance
+    example_sli: Percentage of tool calls passing authorization checks.
+  - slo_area: Execution safety
+    example_sli: Percentage of executions matching approved order constraints.
+
+minimum_targets:
+  audit_completeness: 99.9_percent
+  security_authorization_check_success: 100_percent
+  execution_constraint_match: 100_percent
+  production_audit_log_write_availability: 99.9_percent
+  kill_switch_detection_latency: immediate

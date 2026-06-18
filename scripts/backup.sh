@@ -1,5 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
-mkdir -p infrastructure/backups
-docker compose exec -T postgres pg_dump -U "${POSTGRES_USER:-apex}" "${POSTGRES_DB:-apex_db}" > "infrastructure/backups/apex-$(date +%Y%m%d-%H%M%S).sql"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+exec "${PROJECT_ROOT}/infrastructure/postgres/backup.sh" "$@"

@@ -5,7 +5,7 @@ import logging
 from app.database.models.exchange import Exchange
 from app.database.repositories.exchange_repository import ExchangeRepository
 from app.database.session import SessionLocal
-from app.integrations.binance.client import BinanceClient
+from app.integrations.exchanges.registry import ExchangeAdapterRegistry
 from app.services.market_service import MarketService
 from app.tasks.celery_app import celery_app
 
@@ -19,8 +19,11 @@ def fetch_market_candles(symbol: str, timeframe: str = "1h", limit: int = 100, e
         exchange = _get_or_create_exchange(db, exchange_id)
         market_service = MarketService(db)
         market_pair = market_service.get_or_create_market_pair(exchange.id, symbol)
-        client = BinanceClient(testnet=True)
-        candles = client.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+        registry = ExchangeAdapterRegistry()
+        adapter = registry.get(exchange.name) or registry.get(exchange.exchange_type)
+        if adapter is None:
+            raise RuntimeError(f"No exchange adapter registered for {exchange.name}")
+        candles = adapter.fetch_candles(symbol, timeframe=timeframe, limit=limit, context=adapter._context("fetch_candles", symbol=symbol))
 
         persisted = 0
         duplicates = 0

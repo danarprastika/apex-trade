@@ -5,10 +5,15 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.config import settings
+from app.core.exceptions import FeatureDisabledError, NotFoundError, ValidationError
+from app.database.models.audit import AuditLog
 from app.database.models.trading import Order, Signal, Strategy
 from app.database.repositories.exchange_repository import ExchangeAccountRepository
 from app.database.repositories.trading_repository import OrderRepository, SignalRepository, StrategyRepository
+from app.domain.entities.strategy import StrategyType
+from app.domain.strategies.versioning import SemanticVersion
+from app.services.feature_flag_service import FeatureFlagService
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +24,15 @@ class StrategyService:
         self.strategies = StrategyRepository(db)
 
     def create(self, name: str, code: str, version: str, strategy_type: str, description: str | None = None) -> Strategy:
+        try:
+            SemanticVersion.parse(version)
+        except ValueError as exc:
+            raise ValidationError(f"Invalid strategy version: {version}") from exc
+        try:
+            normalized_strategy_type = StrategyType(strategy_type).value
+        except ValueError as exc:
+            raise ValidationError(f"Invalid strategy_type: {strategy_type}") from exc
+
         existing_strategy = self.strategies.get_by_code(code)
         if existing_strategy:
             raise ValidationError("Strategy code already exists")
@@ -27,16 +41,23 @@ class StrategyService:
             name=name,
             code=code,
             version=version,
-            strategy_type=strategy_type,
+            strategy_type=normalized_strategy_type,
             description=description,
         )
         self.strategies.commit()
         self.strategies.refresh(strategy)
-        logger.info("Created strategy strategy_id=%s code=%s", strategy.id, strategy.code)
+        logger.info("Created strategy strategy_id=%s code=%s type=%s", strategy.id, strategy.code, strategy.strategy_type)
         return strategy
 
     def list(self, limit: int = 100, offset: int = 0) -> list[Strategy]:
         return self.strategies.list(limit=limit, offset=offset)
+
+    def list_by_type(self, strategy_type: str, limit: int = 100, offset: int = 0) -> list[Strategy]:
+        try:
+            normalized_strategy_type = StrategyType(strategy_type).value
+        except ValueError as exc:
+            raise ValidationError(f"Invalid strategy_type: {strategy_type}") from exc
+        return self.strategies.find_by_type(normalized_strategy_type)[offset : offset + limit]
 
 
 class SignalService:
@@ -89,8 +110,9 @@ class SignalService:
 
 
 class ExecutionService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, feature_flag_service: FeatureFlagService | None = None):
         self.db = db
+        self.feature_flags = feature_flag_service or FeatureFlagService(db)
         self.orders = OrderRepository(db)
         self.accounts = ExchangeAccountRepository(db)
 
@@ -105,6 +127,16 @@ class ExecutionService:
         status: str = "NEW",
         user_id: str | None = None,
     ) -> Order:
+        if quantity <= 0:
+            raise ValidationError("Quantity must be greater than zero")
+        if price is not None and price <= 0:
+            raise ValidationError("Price must be greater than zero")
+        normalized_side = side.upper()
+        if normalized_side not in {"BUY", "SELL"}:
+            raise ValidationError("Order side must be BUY or SELL")
+
+        self._require_live_trading_enabled(user_id)
+
         if user_id is not None:
             account = self.accounts.get_by_user(user_id, exchange_account_id)
             if not account:
@@ -134,6 +166,22 @@ class ExecutionService:
         self.orders.refresh(order)
         logger.info("Created order order_id=%s account_id=%s", order.id, exchange_account_id)
         return order
+
+    def _require_live_trading_enabled(self, user_id: str | None) -> None:
+        try:
+            self.feature_flags.require_enabled("live_trading.enabled", environment=settings.app_env)
+        except FeatureDisabledError as exc:
+            audit = AuditLog(
+                user_id=user_id,
+                entity_type="feature_flag_enforcement",
+                entity_id="live_trading.enabled",
+                action="LIVE_TRADING_BLOCKED",
+                new_value={"flag_key": "live_trading.enabled", "reason": str(exc.detail)},
+            )
+            self.db.add(audit)
+            self.db.commit()
+            logger.warning("live trading blocked user_id=%s reason=%s", user_id, exc.detail)
+            raise
 
     def list_orders(self, limit: int = 100, user_id: str | None = None) -> list[Order]:
         if user_id is not None:

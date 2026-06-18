@@ -11,15 +11,18 @@ from app.core.encryption import decrypt_secret, encrypt_secret
 from app.core.exceptions import NotFoundError, ValidationError
 from app.database.models.exchange import Exchange, ExchangeAccount
 from app.database.repositories.exchange_repository import ExchangeAccountRepository, ExchangeRepository
+from app.integrations.exchanges.interfaces import ExchangeAdapter
+from app.integrations.exchanges.registry import ExchangeAdapterRegistry
 
 logger = logging.getLogger(__name__)
 
 
 class ExchangeService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, adapter_registry: ExchangeAdapterRegistry | None = None):
         self.db = db
         self.exchanges = ExchangeRepository(db)
         self.accounts = ExchangeAccountRepository(db)
+        self.adapter_registry = adapter_registry or ExchangeAdapterRegistry()
 
     def create_exchange(self, name: str, exchange_type: str, status: str = "ACTIVE") -> Exchange:
         exchange = self.exchanges.create(name=name, exchange_type=exchange_type, status=status)
@@ -64,6 +67,10 @@ class ExchangeService:
         if not account:
             raise NotFoundError("Exchange account not found")
         return account
+
+    def get_adapter(self, exchange: Exchange, account: ExchangeAccount | None = None) -> ExchangeAdapter | None:
+        del account
+        return self.adapter_registry.get(exchange.name) or self.adapter_registry.get(exchange.exchange_type)
 
     def decrypt_credentials(self, account: ExchangeAccount) -> tuple[str, str]:
         return decrypt_secret(account.api_key_encrypted), decrypt_secret(account.api_secret_encrypted)

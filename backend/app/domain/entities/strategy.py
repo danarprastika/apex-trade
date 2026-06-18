@@ -9,8 +9,13 @@ class StrategyType(str, Enum):
     trend_following = "trend_following"
     mean_reversion = "mean_reversion"
     breakout = "breakout"
+    scalping = "scalping"
     arbitrage = "arbitrage"
     custom = "custom"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return [strategy_type.value for strategy_type in cls]
 
 
 class StrategyStatus(str, Enum):

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthGuard from '../components/AuthGuard'
 import RoleGuard from '../components/guards/RoleGuard'
 import Layout from '../components/Layout'
+import JournalPage from '../features/journal/JournalPage'
 import AdminPage from '../pages/AdminPage'
 import DashboardPage from '../pages/DashboardPage'
 import LoginPage from '../pages/LoginPage'
@@ -19,6 +20,7 @@ export function AppRoutes() {
         <Route index element={<DashboardPage />} />
         <Route path="market" element={<MarketPage />} />
         <Route path="trading" element={<TradingPage />} />
+        <Route path="journal" element={<JournalPage />} />
         <Route path="portfolio" element={<PortfolioPage />} />
         <Route path="news" element={<NewsPage />} />
         <Route path="settings" element={<SettingsPage />} />

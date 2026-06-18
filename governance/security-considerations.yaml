@@ -1,0 +1,143 @@
+policy_id: apex-security-considerations
+schema_version: 1.0
+status: implemented
+description: Security, trading safety, threat model, and incident response requirements for APEX AI agents.
+last_updated: 2026-06-16
+
+identity_and_access_management:
+  - control_id: unique_agent_identity
+    requirement: Each agent must have a distinct identity, role, and permission set.
+  - control_id: least_privilege
+    requirement: Agents must only access the systems and data required for their function.
+  - control_id: role_based_access_control
+    requirement: Access must be granted by role, not shared credentials.
+  - control_id: no_shared_credentials
+    requirement: Agents must not share user credentials or service accounts.
+  - control_id: short_lived_tokens
+    requirement: Runtime credentials must expire automatically.
+  - control_id: secret_rotation
+    requirement: Secrets must be rotated on a defined schedule and after suspected compromise.
+  - control_id: permission_review
+    requirement: Agent permissions must be reviewed regularly.
+
+tool_and_api_security:
+  - control_id: allowlisted_tools
+    requirement: Agents may only call approved tools.
+  - control_id: tool_schema_validation
+    requirement: Inputs and outputs must match strict schemas.
+  - control_id: no_arbitrary_command_execution
+    requirement: Agents must not execute shell commands or arbitrary scripts.
+  - control_id: no_unrestricted_network_access
+    requirement: External access must be limited to approved endpoints.
+  - control_id: rate_limiting
+    requirement: Tool calls must be rate-limited to prevent abuse.
+  - control_id: idempotency_keys
+    requirement: State-changing actions must use idempotency controls.
+  - control_id: output_validation
+    requirement: Agent outputs must be validated before downstream use.
+  - control_id: tool_call_logging
+    requirement: Every tool call must be logged with agent identity and authorization result.
+
+prompt_and_model_security:
+  - control_id: prompt_injection_protection
+    requirement: External content must be treated as untrusted.
+  - control_id: data_exfiltration_prevention
+    requirement: Agents must not expose secrets, credentials, or restricted data in outputs.
+  - control_id: model_version_control
+    requirement: Model versions used by agents must be recorded and reproducible.
+  - control_id: prompt_version_control
+    requirement: Prompts and system instructions must be versioned.
+  - control_id: evaluation_before_release
+    requirement: Agents must pass safety, accuracy, and policy evaluations before production use.
+  - control_id: rollback_capability
+    requirement: Agent behavior must be rollback-capable to a prior approved model or prompt version.
+  - control_id: human_review_for_high_impact_actions
+    requirement: High-impact recommendations require human approval.
+
+trading_safety_controls:
+  - control_id: kill_switch
+    requirement: A global kill switch must stop all agent-driven trading activity.
+  - control_id: circuit_breakers
+    requirement: Trading must pause when risk, liquidity, volatility, or market data conditions breach thresholds.
+  - control_id: pre_trade_risk_checks
+    requirement: Every order must pass risk checks before execution.
+  - control_id: post_trade_validation
+    requirement: Every execution must be reconciled against the approved order.
+  - control_id: order_limits
+    requirement: Quantity, notional value, price, venue, and time constraints must be enforced.
+  - control_id: duplicate_prevention
+    requirement: Orders must be deduplicated using approved identifiers.
+  - control_id: manual_override_controls
+    requirement: Overrides must require approval, reason codes, and audit logging.
+
+data_security_and_privacy:
+  - control_id: data_classification
+    requirement: All agent inputs and outputs must be classified.
+  - control_id: sensitive_data_redaction
+    requirement: Secrets, credentials, and personal data must be redacted from prompts and logs.
+  - control_id: encryption_in_transit
+    requirement: Agent communications must use encrypted channels.
+  - control_id: encryption_at_rest
+    requirement: Stored logs, reports, and state must be encrypted.
+  - control_id: access_logging
+    requirement: Access to sensitive data must be logged.
+  - control_id: retention_controls
+    requirement: Data retention must align with compliance and business requirements.
+  - control_id: vendor_controls
+    requirement: Third-party AI or data providers must be reviewed for security and privacy compliance.
+
+threat_model:
+  - threat: Prompt injection from external research
+    mitigation: Treat external content as untrusted and validate all outputs.
+  - threat: Agent impersonation
+    mitigation: Require unique identities, authentication, and authorization for every action.
+  - threat: Privilege escalation
+    mitigation: Enforce least privilege and prevent agents from modifying permissions.
+  - threat: Unauthorized trade execution
+    mitigation: Require approved order intents and pre-trade risk checks.
+  - threat: Stale market data
+    mitigation: Enforce data freshness checks before decisions and execution.
+  - threat: Duplicate orders
+    mitigation: Use idempotency keys and execution deduplication.
+  - threat: Secret leakage
+    mitigation: Redact secrets, use short-lived tokens, and monitor secret access.
+  - threat: Audit tampering
+    mitigation: Use immutable or tamper-evident audit storage.
+  - threat: Model drift
+    mitigation: Monitor outputs, validate performance, and version model releases.
+  - threat: Market manipulation or policy violation
+    mitigation: Enforce compliance rules and human review for high-impact actions.
+
+incident_response_requirements:
+  - scenario: Unauthorized agent action
+    required_response:
+      - Stop affected agent.
+      - Preserve audit logs.
+      - Revoke permissions.
+      - Investigate.
+  - scenario: Secret exposure
+    required_response:
+      - Rotate secret.
+      - Identify affected actions.
+      - Review audit logs.
+  - scenario: Incorrect execution
+    required_response:
+      - Halt affected workflow.
+      - Reconcile orders.
+      - Notify risk and operations.
+  - scenario: Risk limit breach
+    required_response:
+      - Trigger risk review.
+      - Block further related actions.
+      - Perform postmortem.
+  - scenario: Audit log failure
+    required_response:
+      - Pause state-changing agent actions until audit logging is restored.
+  - scenario: Model safety failure
+    required_response:
+      - Roll back model or prompt version.
+      - Review evaluation results.
+  - scenario: Kill-switch activation
+    required_response:
+      - Stop all agent-driven execution.
+      - Require formal restart approval.

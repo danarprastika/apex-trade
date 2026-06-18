@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.encryption import encrypt_secret
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.config import settings
+from app.core.exceptions import FeatureDisabledError, NotFoundError, ValidationError
 from app.database.models.audit import AuditLog
 from app.database.models.exchange import Exchange, ExchangeAccount
 from app.database.models.notification import Notification
@@ -19,6 +20,7 @@ from app.database.repositories.notification_repository import NotificationReposi
 from app.database.repositories.portfolio_repository import PortfolioRepository, PortfolioSnapshotRepository
 from app.database.repositories.risk_repository import RiskEventRepository, RiskProfileRepository
 from app.database.repositories.trading_repository import OrderRepository, PositionRepository, StrategyRepository, TradeRepository
+from app.services.feature_flag_service import FeatureFlagService
 from app.services.risk_service import RiskService
 
 logger = logging.getLogger(__name__)
@@ -45,8 +47,9 @@ class PaperTradingResult:
 
 
 class PaperTradingService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, feature_flag_service: FeatureFlagService | None = None):
         self.db = db
+        self.feature_flags = feature_flag_service or FeatureFlagService(db)
         self.exchanges = ExchangeRepository(db)
         self.accounts = ExchangeAccountRepository(db)
         self.market_pairs = MarketPairRepository(db)
@@ -78,6 +81,8 @@ class PaperTradingService:
             raise ValidationError("Quantity must be greater than zero")
         if price is None or price <= 0:
             raise ValidationError("Paper order price is required")
+
+        self._require_paper_trading_enabled(user_id)
 
         market_pair = self.market_pairs.get(market_pair_id)
         if not market_pair:
@@ -313,6 +318,22 @@ class PaperTradingService:
     def _notify(self, user_id: str, notification_type: str, title: str, message: str) -> None:
         self.notifications.create(user_id=user_id, notification_type=notification_type, title=title, message=message)
         self.notifications.commit()
+
+    def _require_paper_trading_enabled(self, user_id: str) -> None:
+        try:
+            self.feature_flags.require_enabled("paper_trading.enabled", environment=settings.app_env)
+        except FeatureDisabledError as exc:
+            audit = AuditLog(
+                user_id=user_id,
+                entity_type="feature_flag_enforcement",
+                entity_id="paper_trading.enabled",
+                action="PAPER_TRADING_BLOCKED",
+                new_value={"flag_key": "paper_trading.enabled", "reason": str(exc.detail)},
+            )
+            self.db.add(audit)
+            self.db.commit()
+            logger.warning("paper trading blocked user_id=%s reason=%s", user_id, exc.detail)
+            raise
 
     def _log_audit(self, user_id: str, entity_type: str, entity_id: str, action: str, details: dict[str, object]) -> None:
         audit = AuditLog(user_id=user_id, entity_type=entity_type, entity_id=entity_id, action=action, new_value=details)

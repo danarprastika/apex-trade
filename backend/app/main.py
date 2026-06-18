@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import signal
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -8,7 +10,8 @@ import structlog
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.router import api_router
@@ -17,7 +20,10 @@ from app.core.exceptions import PermissionDeniedError, ValidationError
 from app.core.logging import configure_logging
 from app.database.base import Base
 from app.database.session import engine
+from app.events.bus import EventBus
+from app.integrations.redis.client import RedisClient
 from app.middlewares.audit import AuditLogMiddleware
+from app.middlewares.metrics import MetricsMiddleware
 from app.middlewares.request_body import RequestBodyMiddleware
 
 configure_logging()
@@ -27,6 +33,8 @@ logger = structlog.get_logger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     if settings.debug and settings.create_tables_on_startup:
+        if settings.app_env == "production":
+            logger.warning("create_tables_on_startup is enabled in production")
         Base.metadata.create_all(bind=engine)
         logger.info("database tables created on startup")
     logger.info("apex backend started", env=settings.app_env)
@@ -52,6 +60,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(MetricsMiddleware)
 app.add_middleware(AuditLogMiddleware)
 app.add_middleware(RequestBodyMiddleware)
 

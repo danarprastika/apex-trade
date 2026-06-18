@@ -13,6 +13,15 @@ from app.database.repositories.trading_repository import (
     StrategyRepository,
     TradeRepository,
 )
+from app.database.repositories.trading_safety_repository import (
+    KillSwitchAuditLogRepository,
+    KillSwitchStateRepository,
+    OrderReconciliationLogRepository,
+    PositionReconciliationLogRepository,
+    MarketDataQualityEventRepository,
+    ExposureLimitRepository,
+)
+from app.database.repositories.analytics_repository import PerformanceMetricsRepository
 
 __all__ = [
     "AuditLogRepository",
@@ -36,4 +45,11 @@ __all__ = [
     "StrategyParameterRepository",
     "StrategyRepository",
     "TradeRepository",
+    "KillSwitchAuditLogRepository",
+    "KillSwitchStateRepository",
+    "OrderReconciliationLogRepository",
+    "PositionReconciliationLogRepository",
+    "MarketDataQualityEventRepository",
+    "ExposureLimitRepository",
+    "PerformanceMetricsRepository",
 ]

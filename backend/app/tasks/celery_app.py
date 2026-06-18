@@ -7,3 +7,4 @@ celery_app.conf.task_serializer = "json"
 celery_app.conf.result_serializer = "json"
 celery_app.conf.accept_content = ["json"]
 celery_app.conf.timezone = "UTC"
+celery_app.conf.include = ["app.tasks.journal_enrichment"]

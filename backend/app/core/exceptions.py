@@ -1,6 +1,11 @@
 from fastapi import HTTPException, status
 
 
+class FeatureDisabledError(HTTPException):
+    def __init__(self, message: str = "Feature is currently disabled"):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+
+
 class ConflictError(HTTPException):
     def __init__(self, message: str):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=message)

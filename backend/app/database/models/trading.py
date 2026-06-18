@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import ForeignKey, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, JSON, Numeric, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
 
@@ -19,6 +19,23 @@ class Strategy(Base, TimestampMixin):
     description: Mapped[str] = mapped_column(String(500), nullable=True)
     strategy_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="INACTIVE", index=True, nullable=False)
+
+    backtest_configs: Mapped[list["BacktestConfig"]] = relationship(back_populates="strategy")
+    backtest_runs: Mapped[list["BacktestRun"]] = relationship(back_populates="strategy")
+    parameter_schemas: Mapped[list["StrategyParameterSchema"]] = relationship(back_populates="strategy")
+
+
+class StrategyParameterSchema(Base, TimestampMixin):
+    __tablename__ = "strategy_parameter_schemas"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
+    strategy_id: Mapped[str] = mapped_column(ForeignKey("strategies.id"), index=True, nullable=False)
+    version: Mapped[str] = mapped_column(String(20), nullable=False)
+    parameters_schema: Mapped[dict] = mapped_column(JSON, nullable=False)
+    migrated_from: Mapped[str] = mapped_column(String(20), nullable=True)
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+    strategy: Mapped["Strategy"] = relationship(back_populates="parameter_schemas")
 
 
 class StrategyParameter(Base, TimestampMixin):
@@ -36,6 +53,7 @@ class Signal(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
     strategy_id: Mapped[str] = mapped_column(ForeignKey("strategies.id"), index=True, nullable=False)
     market_pair_id: Mapped[str] = mapped_column(ForeignKey("market_pairs.id"), index=True, nullable=False)
+    backtest_run_id: Mapped[str] = mapped_column(ForeignKey("backtest_runs.id"), index=True, nullable=True)
     signal_type: Mapped[str] = mapped_column(String(20), nullable=False)
     confidence: Mapped[float] = mapped_column(Numeric, nullable=False)
     entry_price: Mapped[float] = mapped_column(Numeric, nullable=False)
@@ -68,6 +86,7 @@ class Position(Base, TimestampMixin):
     exchange_account_id: Mapped[str] = mapped_column(ForeignKey("exchange_accounts.id"), index=True, nullable=False)
     market_pair_id: Mapped[str] = mapped_column(ForeignKey("market_pairs.id"), index=True, nullable=False)
     strategy_id: Mapped[str] = mapped_column(ForeignKey("strategies.id"), index=True, nullable=False)
+    portfolio_id: Mapped[str] = mapped_column(ForeignKey("portfolios.id"), nullable=True)
     entry_order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), nullable=True)
     entry_price: Mapped[float] = mapped_column(Numeric, nullable=False)
     quantity: Mapped[float] = mapped_column(Numeric, nullable=False)

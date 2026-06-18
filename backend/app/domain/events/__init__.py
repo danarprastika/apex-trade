@@ -1,3 +1,4 @@
+from app.domain.events.journal import ScreenshotUploaded, TradeJournalCreated, TradeJournalUpdated
 from app.domain.events.trading import (
     DomainEvent,
     OrderCreated,
@@ -16,4 +17,7 @@ __all__ = [
     "PositionOpened",
     "RiskViolated",
     "SignalGenerated",
+    "ScreenshotUploaded",
+    "TradeJournalCreated",
+    "TradeJournalUpdated",
 ]

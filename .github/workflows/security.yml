@@ -1,0 +1,98 @@
+name: Security
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  pull_request:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+
+  secret-scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+  sast-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('backend/requirements-dev.txt') }}
+      - name: Install bandit
+        run: pip install bandit
+      - name: Run bandit
+        run: bandit -r backend/app -f json -o bandit-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  sast-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: cd frontend && npm ci
+      - name: Audit dependencies
+        run: cd frontend && npm audit --audit-level=high
+
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build images
+        run: |
+          docker build -t apex-backend backend
+          docker build -t apex-frontend frontend
+          docker build -t apex-telegram-bot telegram-bot
+          docker build -t apex-nginx infrastructure/nginx
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: apex-backend
+          format: "sarif"
+          output: "trivy-backend.sarif"
+      - name: Run Trivy on frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: apex-frontend
+          format: "sarif"
+          output: "trivy-frontend.sarif"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-reports
+          path: "trivy-*.sarif"

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { adminApi, authApi, healthApi, marketApi, notificationApi, portfolioApi, riskApi, tradingApi } from '../services/api'
+import { journalApi as journalQueryApi } from '../services/journalApi'
 
 export function useCurrentUser() {
   return useQuery({ queryKey: ['currentUser'], queryFn: authApi.me })
@@ -55,4 +56,16 @@ export function useAuditLogs() {
 
 export function useAdminUsers() {
   return useQuery({ queryKey: ['adminUsers'], queryFn: adminApi.users })
+}
+
+export function useJournals(filters?: Parameters<typeof journalQueryApi.list>[0]) {
+  return useQuery({ queryKey: ['journalList', filters], queryFn: () => journalQueryApi.list(filters).then((response) => response.data) })
+}
+
+export function useJournalAnalytics(filters?: Parameters<typeof journalQueryApi.list>[0]) {
+  return useQuery({ queryKey: ['journalAnalytics', filters], queryFn: () => journalQueryApi.getAnalytics(filters).then((response) => response.data) })
+}
+
+export function useJournalTags(query = '', limit = 10) {
+  return useQuery({ queryKey: ['journalTags', query, limit], queryFn: () => journalQueryApi.autocompleteTags(query, limit).then((response) => response.data) })
 }

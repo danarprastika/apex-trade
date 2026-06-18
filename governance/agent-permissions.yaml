@@ -1,0 +1,212 @@
+policy_id: apex-agent-permissions
+schema_version: 1.0
+status: implemented
+description: Permission model for current and future APEX AI agents.
+last_updated: 2026-06-16
+
+agents:
+  research:
+    display_name: Research Agent
+    description: Gathers, summarizes, and evaluates research information.
+    identity: agent.research
+    permission_level: read_write_recommend
+    permissions:
+      read:
+        - data.market.prices
+        - data.market.order_book
+        - data.news.articles
+        - data.economic.indicators
+        - data.alternative.sources
+        - data.internal.research
+        - data.strategy.documentation
+        - data.model.performance_summary
+      write:
+        - entity.research_notes
+        - entity.data_summaries
+        - entity.source_citations
+        - entity.research_confidence_scores
+      recommend:
+        - recommendation.research_opportunity
+        - recommendation.strategy_candidate
+      approve: []
+      execute: []
+    denied:
+      - action.trade.place
+      - action.trade.cancel
+      - action.portfolio.rebalance
+      - action.order.approve
+      - action.permission.modify
+      - action.secret.read
+      - action.shell.execute
+
+  market:
+    display_name: Market Agent
+    description: Analyzes market conditions and produces market signals.
+    identity: agent.market
+    permission_level: read_write_recommend
+    permissions:
+      read:
+        - data.market.prices
+        - data.market.order_book
+        - data.market.historical_prices
+        - data.market.volatility
+        - data.market.liquidity
+        - data.market.regime
+        - data.risk.summary
+      write:
+        - entity.market_state
+        - entity.signal_features
+        - entity.market_regime_classification
+        - entity.data_quality_status
+      recommend:
+        - recommendation.trade_opportunity_signal
+      approve: []
+      execute: []
+    denied:
+      - action.trade.place
+      - action.trade.cancel
+      - action.portfolio.rebalance
+      - action.order.approve
+      - action.risk.override
+      - action.permission.modify
+      - action.secret.read
+      - action.shell.execute
+
+  risk:
+    display_name: Risk Agent
+    description: Calculates risk, monitors limits, detects breaches, and can veto unsafe actions.
+    identity: agent.risk
+    permission_level: read_write_recommend_veto
+    permissions:
+      read:
+        - data.portfolio.positions
+        - data.portfolio.exposures
+        - data.portfolio.margin
+        - data.portfolio.liquidity
+        - data.market.prices
+        - data.execution.fills
+        - data.risk.limits
+        - data.order.intent
+      write:
+        - entity.risk_metrics
+        - entity.risk_alerts
+        - entity.limit_breach_events
+        - entity.risk_scorecards
+        - entity.risk_decision
+      recommend:
+        - recommendation.risk_warning
+        - recommendation.trade_restriction
+        - recommendation.position_reduction
+      approve:
+        - approval.risk_veto_within_policy
+      execute: []
+    denied:
+      - action.trade.initiate
+      - action.portfolio.strategy.modify
+      - action.risk.override_outside_policy
+      - action.order.place
+      - action.permission.modify
+      - action.secret.read
+      - action.shell.execute
+
+  portfolio:
+    display_name: Portfolio Agent
+    description: Creates allocation and rebalance proposals.
+    identity: agent.portfolio
+    permission_level: read_write_recommend
+    permissions:
+      read:
+        - data.research.outputs
+        - data.market.signals
+        - data.risk.metrics
+        - data.portfolio.state
+        - data.account.constraints
+        - data.execution.summary
+      write:
+        - entity.allocation_proposal
+        - entity.rebalance_proposal
+        - entity.target_weights
+        - entity.portfolio_rationale
+      recommend:
+        - recommendation.portfolio_change
+        - recommendation.rebalance_plan
+      approve: []
+      execute: []
+    denied:
+      - action.order.place
+      - action.order.approve
+      - action.risk.bypass
+      - action.permission.modify
+      - action.secret.read
+      - action.shell.execute
+
+  execution:
+    display_name: Execution Agent
+    description: Executes approved orders within approved constraints.
+    identity: agent.execution
+    permission_level: read_write_execute_approved_only
+    permissions:
+      read:
+        - data.order.approved_intent
+        - data.order.constraints
+        - data.account.status
+        - data.market.prices
+        - data.execution.venue
+        - data.risk.approval_status
+      write:
+        - entity.order_lifecycle_event
+        - entity.fill_report
+        - entity.execution_quality_metric
+        - entity.execution_exception
+      recommend:
+        - recommendation.execution_method
+      approve: []
+      execute:
+        - action.order.place_approved
+        - action.order.cancel_approved
+        - action.order.modify_within_approved_constraints
+    denied:
+      - action.strategy.modify
+      - action.order.intent.modify
+      - action.order.quantity.exceed_approved
+      - action.order.price.exceed_approved
+      - action.risk.bypass
+      - action.permission.modify
+      - action.secret.read
+      - action.shell.execute
+
+permission_levels:
+  read:
+    description: Can read approved data sources, signals, risk state, market data, or portfolio state.
+  write:
+    description: Can write structured outputs such as research notes, signals, risk metrics, portfolio proposals, or execution events.
+  recommend:
+    description: Can propose actions but cannot execute them directly.
+  approve:
+    description: Can approve or reject specific actions within defined policy limits.
+  execute:
+    description: Can perform an approved action using an approved tool or service.
+  admin:
+    description: Reserved for platform operators and must not be granted to autonomous agents.
+
+required_controls:
+  - control_id: least_privilege
+    requirement: Each agent receives only the minimum access required for its role.
+  - control_id: segregation_of_duties
+    requirement: No single agent may research, approve, and execute a trade without independent checks.
+  - control_id: tool_level_authorization
+    requirement: Permissions must be enforced at the tool or service boundary, not only inside the agent.
+  - control_id: environment_separation
+    requirement: Development, staging, and production permissions must be isolated.
+  - control_id: time_bound_access
+    requirement: Elevated or temporary permissions must expire automatically.
+  - control_id: no_direct_secret_access
+    requirement: Agents must receive secrets through secure runtime injection, not persistent storage.
+  - control_id: no_database_admin_access
+    requirement: Agents must not have direct administrative database permissions.
+  - control_id: no_unrestricted_shell_access
+    requirement: Agents must not be able to execute arbitrary shell commands.
+  - control_id: no_self_approval
+    requirement: An agent cannot approve its own proposed action.
+  - control_id: no_self_modification
+    requirement: Agents cannot modify their own permissions, policies, or approval rules.
