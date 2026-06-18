@@ -14,7 +14,7 @@ jobs:
   backend-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -51,7 +51,7 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -77,7 +77,7 @@ jobs:
   frontend-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -92,7 +92,7 @@ jobs:
     needs: frontend-lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -107,7 +107,7 @@ jobs:
     needs: frontend-typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -126,7 +126,7 @@ jobs:
     needs: frontend-lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -140,7 +140,7 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -166,7 +166,7 @@ jobs:
     needs: [backend-test, frontend-build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build backend
