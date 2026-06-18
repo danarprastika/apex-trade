@@ -47,7 +47,7 @@ jobs:
         run: pip install bandit
       - name: Run bandit
         run: bandit -r backend/app -f json -o bandit-report.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bandit-report
@@ -91,7 +91,7 @@ jobs:
           image-ref: apex-frontend
           format: "sarif"
           output: "trivy-frontend.sarif"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: trivy-reports
