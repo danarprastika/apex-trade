@@ -1,9 +1,0 @@
-{{ define "telegram.message" }}
-🔔 *APEX Alert*
-*Severity:* {{ .Status }}
-*Alert:* {{ .CommonLabels.alertname }}
-*Service:* {{ .CommonLabels.service | default "unknown" }}
-*Summary:* {{ .Annotations.summary | default "No summary" }}
-*Description:* {{ .Annotations.description | default "No description" }}
-*Starts At:* {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
-{{ end }}
