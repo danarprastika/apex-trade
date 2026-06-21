@@ -1,1 +1,0 @@
-"""Base event stub."""

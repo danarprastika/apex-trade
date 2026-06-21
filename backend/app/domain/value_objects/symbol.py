@@ -1,1 +1,0 @@
-"""Symbol value object stub."""

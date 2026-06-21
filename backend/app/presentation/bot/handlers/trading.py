@@ -1,1 +1,0 @@
-"""Telegram trading handler stub."""

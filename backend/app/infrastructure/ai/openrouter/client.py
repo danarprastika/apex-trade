@@ -1,1 +1,0 @@
-"""OpenRouter AI client stub."""

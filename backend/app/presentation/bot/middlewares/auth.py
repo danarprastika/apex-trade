@@ -1,1 +1,0 @@
-"""Telegram authentication middleware stub."""

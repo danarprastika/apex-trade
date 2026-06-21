@@ -1,1 +1,0 @@
-"""CCXT adapter stub."""

@@ -1,1 +1,0 @@
-"""Notification dispatcher stub."""

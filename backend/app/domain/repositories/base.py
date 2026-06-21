@@ -1,1 +1,0 @@
-"""Base repository interface stub."""

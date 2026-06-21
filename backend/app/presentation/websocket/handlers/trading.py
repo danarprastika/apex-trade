@@ -1,1 +1,0 @@
-"""WebSocket trading handler stub."""

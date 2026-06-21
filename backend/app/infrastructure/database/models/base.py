@@ -1,1 +1,0 @@
-"""SQLAlchemy base model stub."""

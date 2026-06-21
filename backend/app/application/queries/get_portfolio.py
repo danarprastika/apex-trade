@@ -1,1 +1,0 @@
-"""Get portfolio query stub."""

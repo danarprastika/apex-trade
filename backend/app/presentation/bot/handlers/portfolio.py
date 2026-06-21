@@ -1,1 +1,0 @@
-"""Telegram portfolio handler stub."""

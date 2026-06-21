@@ -1,1 +1,0 @@
-"""Price value object stub."""
