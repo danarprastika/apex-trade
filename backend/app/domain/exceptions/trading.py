@@ -1,0 +1,1 @@
+"""Trading exceptions stub."""

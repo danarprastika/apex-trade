@@ -1,0 +1,1 @@
+"""Place order command stub."""

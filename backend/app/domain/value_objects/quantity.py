@@ -1,0 +1,1 @@
+"""Quantity value object stub."""

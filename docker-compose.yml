@@ -1,0 +1,108 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: quantx-postgres
+    environment:
+      POSTGRES_USER: quantx
+      POSTGRES_PASSWORD: quantx
+      POSTGRES_DB: quantx
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - quantx-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quantx"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: quantx-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./infrastructure/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./data/redis:/data
+    networks:
+      - quantx-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: quantx-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quantx-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../infrastructure/docker/backend.Dockerfile
+    container_name: quantx-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://quantx:quantx@postgres:5432/quantx
+      - REDIS_URL=redis://redis:6379/0
+      - QUANTX_ENV=development
+      - QUANTX_DEBUG=true
+      - QUANTX_LOG_LEVEL=DEBUG
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quantx-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../infrastructure/docker/frontend.Dockerfile
+    container_name: quantx-frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - quantx-net
+
+  telegram:
+    build:
+      context: ./telegram
+      dockerfile: ../infrastructure/docker/telegram.Dockerfile
+    container_name: quantx-telegram
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://quantx:quantx@postgres:5432/quantx
+      - REDIS_URL=redis://redis:6379/0
+      - QUANTX_ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quantx-net
+
+networks:
+  quantx-net:
+    driver: bridge

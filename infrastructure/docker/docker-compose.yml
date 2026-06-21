@@ -1,0 +1,54 @@
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: ./backend.Dockerfile
+    container_name: quantx-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://quantx:quantx@postgres:5432/quantx
+      - REDIS_URL=redis://redis:6379/0
+      - QUANTX_ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quantx-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: quantx-postgres
+    environment:
+      POSTGRES_USER: quantx
+      POSTGRES_PASSWORD: quantx
+      POSTGRES_DB: quantx
+    volumes:
+      - ../../data/postgres:/var/lib/postgresql/data
+    networks:
+      - quantx-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quantx"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: quantx-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - ../../data/redis:/data
+    networks:
+      - quantx-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  quantx-net:
+    driver: bridge

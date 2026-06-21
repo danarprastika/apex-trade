@@ -1,0 +1,1 @@
+"""Telegram reply keyboards stub."""
