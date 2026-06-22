@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "quantx-ai-telegram"
+version = "0.1.0"
+description = "QuantX AI Telegram Bot"
+authors = ["QuantX AI Team"]
+requires-python = ">=3.12"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+aiogram = "^3.4.0"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.0"
+mypy = "^1.11.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

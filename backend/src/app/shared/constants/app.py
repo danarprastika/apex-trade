@@ -1,0 +1,29 @@
+"""Shared low-level constants for QuantX AI."""
+
+from __future__ import annotations
+
+DEFAULT_API_PREFIX: str = "/api/v1"
+DEFAULT_APP_NAME: str = "QuantX AI"
+DEFAULT_APP_VERSION: str = "0.1.0"
+DEFAULT_ENV_FILE_ENCODING: str = "utf-8"
+DEFAULT_ENV_FILE_NAME: str = ".env"
+DEFAULT_HEALTH_ENDPOINT: str = "/health"
+DEFAULT_HOST: str = "0.0.0.0"
+DEFAULT_LOG_LEVEL: str = "INFO"
+DEFAULT_PORT: int = 8000
+DEFAULT_REDIS_MAX_CONNECTIONS: int = 10
+QUANTX_ENV_PREFIX: str = "QUANTX_"
+
+__all__ = [
+    "DEFAULT_API_PREFIX",
+    "DEFAULT_APP_NAME",
+    "DEFAULT_APP_VERSION",
+    "DEFAULT_ENV_FILE_ENCODING",
+    "DEFAULT_ENV_FILE_NAME",
+    "DEFAULT_HEALTH_ENDPOINT",
+    "DEFAULT_HOST",
+    "DEFAULT_LOG_LEVEL",
+    "DEFAULT_PORT",
+    "DEFAULT_REDIS_MAX_CONNECTIONS",
+    "QUANTX_ENV_PREFIX",
+]

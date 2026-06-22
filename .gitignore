@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+secrets/
+
+# Git
+.git/
+.kilo/plans/*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+!docker-compose.yml
+!docker-compose.dev.yml
+docker/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+postgres_data/
+redis_data/
+
+# Backups
+backups/
+
+# Certificates
+certbot/
